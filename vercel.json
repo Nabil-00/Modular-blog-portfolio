@@ -16,6 +16,10 @@
       "dest": "/api/posts/[id].js?id=$1"
     },
     {
+      "src": "/api/auth/(.*)",
+      "dest": "/api/auth/$1"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
