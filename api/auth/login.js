@@ -1,5 +1,5 @@
-import { applyCors } from '../../api/_lib/cors.js';
-import { supabase } from '../../api/_lib/supabaseClient.js';
+import { applyCors } from '../_lib/cors.js';
+import { supabase } from '../_lib/supabaseClient.js';
 
 export default async function handler(req, res) {
   if (!applyCors(req, res)) return;
