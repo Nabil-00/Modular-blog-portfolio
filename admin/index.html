@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Blog Admin</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Supabase Blog Admin</h1>
+    <button id="logout-btn" class="ghost" hidden>Logout</button>
+  </header>
+
+  <main>
+    <section id="login-section" class="card">
+      <h2>Admin Login</h2>
+      <form id="login-form">
+        <label>
+          Email
+          <input type="email" id="login-email" placeholder="you@example.com" required>
+        </label>
+        <label>
+          Password
+          <input type="password" id="login-password" placeholder="••••••••" required>
+        </label>
+        <button type="submit">Sign In</button>
+      </form>
+    </section>
+
+    <section id="dashboard" class="card" hidden>
+      <div class="dashboard-header">
+        <h2>Posts</h2>
+        <button id="new-post-btn">New Post</button>
+      </div>
+      <div id="status" role="status" aria-live="polite"></div>
+      <div class="posts-list" id="posts-list">
+        <p class="placeholder">No posts yet. Create your first post!</p>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="post-dialog">
+    <form method="dialog" id="post-form">
+      <h3 id="dialog-title">Create Post</h3>
+      <input type="hidden" id="post-id">
+      <label>
+        Title
+        <input type="text" id="post-title" required>
+      </label>
+      <label>
+        Image URL
+        <input type="url" id="post-image" placeholder="https://...">
+      </label>
+      <label>
+        Content
+        <textarea id="post-content" rows="6" required></textarea>
+      </label>
+      <menu>
+        <button type="reset" id="cancel-btn" value="cancel">Cancel</button>
+        <button type="submit">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <template id="post-item-template">
+    <article class="post-item">
+      <div class="post-meta">
+        <h3 class="post-title"></h3>
+        <p class="post-date"></p>
+      </div>
+      <p class="post-content"></p>
+      <div class="actions">
+        <button class="ghost edit-btn">Edit</button>
+        <button class="danger delete-btn">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <script src="main.js" type="module"></script>
+</body>
+</html>
