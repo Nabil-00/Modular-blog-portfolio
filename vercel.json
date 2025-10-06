@@ -13,15 +13,15 @@
   "routes": [
     {
       "src": "/api/posts/([^/]+)",
-      "dest": "/api/posts/[id].js"
+      "dest": "/api/posts/[id]"
     },
     {
       "src": "/api/auth/(.*)",
-      "dest": "/api/auth/$1.js"
+      "dest": "/api/auth/$1"
     },
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1.js"
+      "dest": "/api/$1"
     },
     {
       "src": "/admin/(.*)",
