@@ -12,18 +12,6 @@
   ],
   "routes": [
     {
-      "src": "/api/posts/([^/]+)",
-      "dest": "/api/posts/[id]"
-    },
-    {
-      "src": "/api/auth/(.*)",
-      "dest": "/api/auth/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
       "src": "/admin/(.*)",
       "dest": "/admin/$1"
     },
