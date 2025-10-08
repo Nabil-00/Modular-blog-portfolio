@@ -12,6 +12,18 @@
   ],
   "routes": [
     {
+      "src": "/api/auth/login",
+      "dest": "/api/auth/login.js"
+    },
+    {
+      "src": "/api/posts/([^/]+)",
+      "dest": "/api/posts/[id].js?id=$1"
+    },
+    {
+      "src": "/api/posts",
+      "dest": "/api/posts/index.js"
+    },
+    {
       "src": "/admin/(.*)",
       "dest": "/admin/$1"
     },

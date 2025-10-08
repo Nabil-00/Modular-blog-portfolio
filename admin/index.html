@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>Supabase Blog Admin</h1>
+    <h1>GalaltixNIG Admin</h1>
     <button id="logout-btn" class="ghost" hidden>Logout</button>
   </header>
 
@@ -28,51 +28,128 @@
       </form>
     </section>
 
-    <section id="dashboard" class="card" hidden>
-      <div class="dashboard-header">
-        <h2>Posts</h2>
-        <button id="new-post-btn">New Post</button>
-      </div>
-      <div id="status" role="status" aria-live="polite"></div>
-      <div class="posts-list" id="posts-list">
-        <p class="placeholder">No posts yet. Create your first post!</p>
-      </div>
-    </section>
+    <div id="dashboard" class="dashboard-container" hidden>
+      <aside class="side-panel">
+        <nav class="nav-menu">
+          <button class="nav-item active" data-section="blog">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Blog Posts</span>
+          </button>
+          <button class="nav-item" data-section="products">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+            <span>Products</span>
+          </button>
+          <button class="nav-item" data-section="portfolio">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Portfolio</span>
+          </button>
+        </nav>
+      </aside>
+
+      <section class="content-area">
+        <div class="content-header">
+          <h2 id="section-title">Blog Posts</h2>
+          <button id="new-item-btn" class="primary-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Post</span>
+          </button>
+        </div>
+        <div id="status" role="status" aria-live="polite"></div>
+        <div class="items-list" id="items-list">
+          <p class="placeholder">No items yet. Create your first item!</p>
+        </div>
+      </section>
+    </div>
   </main>
 
-  <dialog id="post-dialog">
-    <form method="dialog" id="post-form">
+  <dialog id="item-dialog">
+    <form method="dialog" id="item-form">
       <h3 id="dialog-title">Create Post</h3>
-      <input type="hidden" id="post-id">
+      <input type="hidden" id="item-id">
+      <input type="hidden" id="item-type">
+      
       <label>
         Title
-        <input type="text" id="post-title" required>
+        <input type="text" id="item-title" required>
       </label>
-      <label>
-        Image URL
-        <input type="url" id="post-image" placeholder="https://...">
+      
+      <label id="image-label">
+        Image
+        <div class="file-upload-container">
+          <input type="file" id="item-image-file" accept="image/*">
+          <div id="image-preview" class="image-preview" hidden>
+            <img id="preview-img" src="" alt="Preview">
+            <button type="button" id="remove-image" class="remove-btn">×</button>
+          </div>
+        </div>
+        <small class="help-text">Upload an image or leave empty</small>
       </label>
-      <label>
-        Content
-        <textarea id="post-content" rows="6" required></textarea>
+      
+      <label id="price-label" hidden>
+        Price
+        <input type="number" id="item-price" step="0.01" min="0" placeholder="0.00">
       </label>
+      
+      <label id="category-label" hidden>
+        Category
+        <input type="text" id="item-category" placeholder="e.g., Electronics, Clothing">
+      </label>
+      
+      <label id="project-url-label" hidden>
+        Project URL
+        <input type="url" id="item-project-url" placeholder="https://...">
+      </label>
+      
+      <label id="technologies-label" hidden>
+        Technologies
+        <input type="text" id="item-technologies" placeholder="e.g., React, Node.js, MongoDB">
+      </label>
+      
+      <label id="content-label">
+        <span id="content-label-text">Content</span>
+        <textarea id="item-content" rows="6" required></textarea>
+      </label>
+      
       <menu>
         <button type="reset" id="cancel-btn" value="cancel">Cancel</button>
-        <button type="submit">Save</button>
+        <button type="submit" id="submit-btn">Save</button>
       </menu>
     </form>
   </dialog>
 
-  <template id="post-item-template">
-    <article class="post-item">
-      <div class="post-meta">
-        <h3 class="post-title"></h3>
-        <p class="post-date"></p>
+  <template id="item-template">
+    <article class="item-card">
+      <div class="item-image" hidden>
+        <img src="" alt="">
       </div>
-      <p class="post-content"></p>
-      <div class="actions">
-        <button class="ghost edit-btn">Edit</button>
-        <button class="danger delete-btn">Delete</button>
+      <div class="item-body">
+        <div class="item-meta">
+          <h3 class="item-title"></h3>
+          <p class="item-date"></p>
+        </div>
+        <p class="item-content"></p>
+        <div class="item-extra" hidden></div>
+        <div class="actions">
+          <button class="ghost edit-btn">Edit</button>
+          <button class="danger delete-btn">Delete</button>
+        </div>
       </div>
     </article>
   </template>

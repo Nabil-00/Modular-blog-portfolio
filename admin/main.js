@@ -1,5 +1,8 @@
+// API base URL - uses relative path to work with any domain
 const API_BASE = '/api';
 let authToken = null;
+let currentSection = 'blog';
+let currentImageFile = null;
 
 const el = {
   loginSection: document.getElementById('login-section'),
@@ -8,18 +11,56 @@ const el = {
   password: document.getElementById('login-password'),
   dashboard: document.getElementById('dashboard'),
   logout: document.getElementById('logout-btn'),
-  newPost: document.getElementById('new-post-btn'),
+  navItems: document.querySelectorAll('.nav-item'),
+  sectionTitle: document.getElementById('section-title'),
+  newItemBtn: document.getElementById('new-item-btn'),
   status: document.getElementById('status'),
-  postsList: document.getElementById('posts-list'),
-  dialog: document.getElementById('post-dialog'),
+  itemsList: document.getElementById('items-list'),
+  dialog: document.getElementById('item-dialog'),
   dialogTitle: document.getElementById('dialog-title'),
-  postForm: document.getElementById('post-form'),
-  postId: document.getElementById('post-id'),
-  postTitle: document.getElementById('post-title'),
-  postImage: document.getElementById('post-image'),
-  postContent: document.getElementById('post-content'),
+  itemForm: document.getElementById('item-form'),
+  itemId: document.getElementById('item-id'),
+  itemType: document.getElementById('item-type'),
+  itemTitle: document.getElementById('item-title'),
+  itemImageFile: document.getElementById('item-image-file'),
+  imagePreview: document.getElementById('image-preview'),
+  previewImg: document.getElementById('preview-img'),
+  removeImageBtn: document.getElementById('remove-image'),
+  itemPrice: document.getElementById('item-price'),
+  itemCategory: document.getElementById('item-category'),
+  itemProjectUrl: document.getElementById('item-project-url'),
+  itemTechnologies: document.getElementById('item-technologies'),
+  itemContent: document.getElementById('item-content'),
+  priceLabel: document.getElementById('price-label'),
+  categoryLabel: document.getElementById('category-label'),
+  projectUrlLabel: document.getElementById('project-url-label'),
+  technologiesLabel: document.getElementById('technologies-label'),
+  contentLabel: document.getElementById('content-label'),
+  contentLabelText: document.getElementById('content-label-text'),
   cancelBtn: document.getElementById('cancel-btn'),
-  template: document.getElementById('post-item-template')
+  submitBtn: document.getElementById('submit-btn'),
+  template: document.getElementById('item-template')
+};
+
+const sectionConfig = {
+  blog: {
+    title: 'Blog Posts',
+    buttonText: 'New Post',
+    endpoint: '/posts',
+    fields: ['title', 'image', 'content']
+  },
+  products: {
+    title: 'Products',
+    buttonText: 'New Product',
+    endpoint: '/products',
+    fields: ['title', 'image', 'price', 'category', 'content']
+  },
+  portfolio: {
+    title: 'Portfolio',
+    buttonText: 'New Project',
+    endpoint: '/portfolio',
+    fields: ['title', 'image', 'projectUrl', 'technologies', 'content']
+  }
 };
 
 function showStatus(msg, type = 'info') {
@@ -30,7 +71,9 @@ function showStatus(msg, type = 'info') {
 
 async function apiRequest(path, opts = {}) {
   const headers = new Headers(opts.headers || {});
-  if (opts.body && !(opts.body instanceof FormData)) headers.set('Content-Type', 'application/json');
+  if (opts.body && !(opts.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
   const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
   if (!res.ok) {
@@ -42,90 +85,249 @@ async function apiRequest(path, opts = {}) {
   return res.json();
 }
 
-function populatePosts(posts) {
-  el.postsList.innerHTML = '';
-  if (!posts.length) {
-    el.postsList.innerHTML = '<p class="placeholder">No posts yet. Create your first post!</p>';
+function switchSection(section) {
+  currentSection = section;
+  const config = sectionConfig[section];
+  
+  // Update UI
+  el.sectionTitle.textContent = config.title;
+  el.newItemBtn.querySelector('span').textContent = config.buttonText;
+  
+  // Update nav active state
+  el.navItems.forEach(item => {
+    if (item.dataset.section === section) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
+  
+  // Load items for this section
+  loadItems();
+}
+
+function configureFormFields(section) {
+  const config = sectionConfig[section];
+  
+  // Hide all optional fields first
+  el.priceLabel.hidden = true;
+  el.categoryLabel.hidden = true;
+  el.projectUrlLabel.hidden = true;
+  el.technologiesLabel.hidden = true;
+  
+  // Show fields based on section
+  if (section === 'products') {
+    el.priceLabel.hidden = false;
+    el.categoryLabel.hidden = false;
+    el.contentLabelText.textContent = 'Description';
+  } else if (section === 'portfolio') {
+    el.projectUrlLabel.hidden = false;
+    el.technologiesLabel.hidden = false;
+    el.contentLabelText.textContent = 'Description';
+  } else {
+    el.contentLabelText.textContent = 'Content';
+  }
+}
+
+function populateItems(items) {
+  el.itemsList.innerHTML = '';
+  if (!items.length) {
+    el.itemsList.innerHTML = '<p class="placeholder">No items yet. Create your first item!</p>';
     return;
   }
-  posts.forEach(post => {
+  
+  items.forEach(item => {
     const node = el.template.content.cloneNode(true);
-    node.querySelector('.post-title').textContent = post.title;
-    const date = new Date(post.updated_at || post.created_at || Date.now());
-    node.querySelector('.post-date').textContent = date.toLocaleString();
-    node.querySelector('.post-content').textContent = post.content?.slice(0, 160) || '';
-    node.querySelector('.edit-btn').addEventListener('click', () => openEditor(post));
-    node.querySelector('.delete-btn').addEventListener('click', () => deletePost(post.id));
-    el.postsList.appendChild(node);
+    const article = node.querySelector('.item-card');
+    
+    // Set image if exists
+    const imageContainer = node.querySelector('.item-image');
+    if (item.image_url) {
+      imageContainer.hidden = false;
+      imageContainer.querySelector('img').src = item.image_url;
+      imageContainer.querySelector('img').alt = item.title;
+    }
+    
+    // Set basic info
+    node.querySelector('.item-title').textContent = item.title;
+    const date = new Date(item.updated_at || item.created_at || Date.now());
+    node.querySelector('.item-date').textContent = date.toLocaleString();
+    node.querySelector('.item-content').textContent = item.content?.slice(0, 120) || item.description?.slice(0, 120) || '';
+    
+    // Set extra info based on type
+    const extraContainer = node.querySelector('.item-extra');
+    if (currentSection === 'products' && item.price) {
+      extraContainer.hidden = false;
+      extraContainer.innerHTML = `<strong>Price:</strong> $${parseFloat(item.price).toFixed(2)}${item.category ? ` | <strong>Category:</strong> ${item.category}` : ''}`;
+    } else if (currentSection === 'portfolio') {
+      const parts = [];
+      if (item.project_url) parts.push(`<a href="${item.project_url}" target="_blank">View Project</a>`);
+      if (item.technologies) parts.push(`<strong>Tech:</strong> ${item.technologies}`);
+      if (parts.length) {
+        extraContainer.hidden = false;
+        extraContainer.innerHTML = parts.join(' | ');
+      }
+    }
+    
+    // Set event listeners
+    node.querySelector('.edit-btn').addEventListener('click', () => openEditor(item));
+    node.querySelector('.delete-btn').addEventListener('click', () => deleteItem(item.id));
+    el.itemsList.appendChild(node);
   });
 }
 
-async function loadPosts() {
+async function loadItems() {
   try {
-    showStatus('Loading posts…');
-    const posts = await apiRequest('/posts');
-    populatePosts(posts);
+    const config = sectionConfig[currentSection];
+    showStatus(`Loading ${config.title.toLowerCase()}…`);
+    const items = await apiRequest(config.endpoint);
+    populateItems(items);
     showStatus('');
   } catch (error) {
     showStatus(error.message, 'error');
   }
 }
 
-async function deletePost(id) {
-  if (!confirm('Delete this post?')) return;
+async function deleteItem(id) {
+  if (!confirm('Delete this item?')) return;
   try {
-    showStatus('Deleting post…');
-    await apiRequest(`/posts/${id}`, { method: 'DELETE' });
-    await loadPosts();
-    showStatus('Post deleted', 'success');
+    const config = sectionConfig[currentSection];
+    showStatus('Deleting…');
+    await apiRequest(`${config.endpoint}/${id}`, { method: 'DELETE' });
+    await loadItems();
+    showStatus('Item deleted', 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   }
 }
 
-function openEditor(post = null) {
-  if (post) {
-    el.dialogTitle.textContent = 'Edit Post';
-    el.postId.value = post.id;
-    el.postTitle.value = post.title || '';
-    el.postImage.value = post.image_url || '';
-    el.postContent.value = post.content || '';
+function handleImageSelect(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  
+  currentImageFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    el.previewImg.src = e.target.result;
+    el.imagePreview.hidden = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage() {
+  currentImageFile = null;
+  el.itemImageFile.value = '';
+  el.imagePreview.hidden = true;
+  el.previewImg.src = '';
+}
+
+function openEditor(item = null) {
+  const config = sectionConfig[currentSection];
+  configureFormFields(currentSection);
+  
+  if (item) {
+    el.dialogTitle.textContent = `Edit ${currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Project'}`;
+    el.itemId.value = item.id;
+    el.itemType.value = currentSection;
+    el.itemTitle.value = item.title || '';
+    el.itemContent.value = item.content || item.description || '';
+    
+    // Show existing image if available
+    if (item.image_url) {
+      el.previewImg.src = item.image_url;
+      el.imagePreview.hidden = false;
+    }
+    
+    // Set section-specific fields
+    if (currentSection === 'products') {
+      el.itemPrice.value = item.price || '';
+      el.itemCategory.value = item.category || '';
+    } else if (currentSection === 'portfolio') {
+      el.itemProjectUrl.value = item.project_url || '';
+      el.itemTechnologies.value = item.technologies || '';
+    }
   } else {
-    el.dialogTitle.textContent = 'Create Post';
-    el.postId.value = '';
-    el.postForm.reset();
+    el.dialogTitle.textContent = `Create ${currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Project'}`;
+    el.itemId.value = '';
+    el.itemType.value = currentSection;
+    el.itemForm.reset();
+    removeImage();
   }
+  
   if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
   else el.dialog.setAttribute('open', '');
 }
 
 function closeEditor() {
-  el.postForm.reset();
-  el.postId.value = '';
+  el.itemForm.reset();
+  el.itemId.value = '';
+  removeImage();
   if (typeof el.dialog.close === 'function') el.dialog.close();
   else el.dialog.removeAttribute('open');
 }
 
-async function submitPost(e) {
+async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  try {
+    const result = await apiRequest('/upload', { method: 'POST', body: formData });
+    return result.url;
+  } catch (error) {
+    throw new Error(`Image upload failed: ${error.message}`);
+  }
+}
+
+async function submitItem(e) {
   e.preventDefault();
-  const id = el.postId.value;
+  const id = el.itemId.value;
+  const config = sectionConfig[currentSection];
+  
   const payload = {
-    title: el.postTitle.value.trim(),
-    image_url: el.postImage.value.trim() || null,
-    content: el.postContent.value.trim()
+    title: el.itemTitle.value.trim(),
+    content: el.itemContent.value.trim()
   };
+  
   if (!payload.title || !payload.content) {
-    showStatus('Title and content required', 'error');
+    showStatus('Title and content/description required', 'error');
     return;
   }
+  
   try {
     showStatus(id ? 'Updating…' : 'Creating…');
+    
+    // Handle image upload if new file selected
+    if (currentImageFile) {
+      showStatus('Uploading image…');
+      payload.image_url = await uploadImage(currentImageFile);
+    } else if (el.previewImg.src && el.previewImg.src.startsWith('http')) {
+      // Keep existing image URL
+      payload.image_url = el.previewImg.src;
+    }
+    
+    // Add section-specific fields
+    if (currentSection === 'products') {
+      const price = el.itemPrice.value.trim();
+      if (price) payload.price = parseFloat(price);
+      const category = el.itemCategory.value.trim();
+      if (category) payload.category = category;
+    } else if (currentSection === 'portfolio') {
+      const projectUrl = el.itemProjectUrl.value.trim();
+      if (projectUrl) payload.project_url = projectUrl;
+      const technologies = el.itemTechnologies.value.trim();
+      if (technologies) payload.technologies = technologies;
+    }
+    
     const body = JSON.stringify(payload);
-    if (id) await apiRequest(`/posts/${id}`, { method: 'PUT', body });
-    else await apiRequest('/posts', { method: 'POST', body });
+    if (id) {
+      await apiRequest(`${config.endpoint}/${id}`, { method: 'PUT', body });
+    } else {
+      await apiRequest(config.endpoint, { method: 'POST', body });
+    }
+    
     closeEditor();
-    await loadPosts();
-    showStatus(id ? 'Post updated' : 'Post created', 'success');
+    await loadItems();
+    showStatus(id ? 'Item updated' : 'Item created', 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   }
@@ -147,7 +349,7 @@ async function handleLogin(e) {
     el.loginSection.hidden = true;
     el.dashboard.hidden = false;
     el.logout.hidden = false;
-    await loadPosts();
+    await loadItems();
   } catch (error) {
     showStatus(error.message, 'error');
   }
@@ -159,7 +361,7 @@ function handleLogout() {
   el.dashboard.hidden = true;
   el.logout.hidden = true;
   el.loginSection.hidden = false;
-  el.postsList.innerHTML = '<p class="placeholder">Please log in.</p>';
+  el.itemsList.innerHTML = '<p class="placeholder">Please log in.</p>';
   showStatus('');
 }
 
@@ -170,15 +372,31 @@ function restoreSession() {
   el.loginSection.hidden = true;
   el.dashboard.hidden = false;
   el.logout.hidden = false;
-  loadPosts();
+  loadItems();
 }
 
 function init() {
+  // Login/logout
   el.loginForm.addEventListener('submit', handleLogin);
   el.logout.addEventListener('click', handleLogout);
-  el.newPost.addEventListener('click', () => openEditor());
-  el.postForm.addEventListener('submit', submitPost);
-  el.cancelBtn.addEventListener('click', () => { closeEditor(); el.postForm.reset(); });
+  
+  // Navigation
+  el.navItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      switchSection(section);
+    });
+  });
+  
+  // Item management
+  el.newItemBtn.addEventListener('click', () => openEditor());
+  el.itemForm.addEventListener('submit', submitItem);
+  el.cancelBtn.addEventListener('click', () => { closeEditor(); });
+  
+  // Image handling
+  el.itemImageFile.addEventListener('change', handleImageSelect);
+  el.removeImageBtn.addEventListener('click', removeImage);
+  
   restoreSession();
 }
 
