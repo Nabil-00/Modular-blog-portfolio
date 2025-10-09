@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   if (method === 'GET') {
     const { data, error } = await supabase
       .from('products')
-      .select('id,title,content,image_url,price,category,created_at,updated_at')
+      .select('id,title,content,image_url,category,created_at,updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -42,11 +42,11 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    const { title, content, image_url, price, category } = req.body;
+    const { title, content, image_url, category } = req.body;
 
     const { data, error } = await supabase
       .from('products')
-      .insert([{ title, content, image_url, price, category }])
+      .insert([{ title, content, image_url, category }])
       .select()
       .single();
 

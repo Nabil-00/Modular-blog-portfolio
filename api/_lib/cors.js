@@ -1,9 +1,22 @@
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()).filter(Boolean);
+function normalizeOrigin(origin) {
+  if (!origin) return null;
+  try {
+    return new URL(origin).origin;
+  } catch (error) {
+    return origin.replace(/\/$/, '').toLowerCase();
+  }
+}
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ?.split(/[\s,]+/)
+  .map(normalizeOrigin)
+  .filter(Boolean);
 
 export function applyCors(req, res) {
   const origin = req.headers.origin;
+  const normalizedOrigin = normalizeOrigin(origin);
 
-  if (!allowedOrigins || allowedOrigins.includes(origin)) {
+  if (!allowedOrigins || allowedOrigins.includes(normalizedOrigin) || allowedOrigins.includes('*')) {
     if (origin) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }

@@ -21,25 +21,23 @@ const el = {
   itemForm: document.getElementById('item-form'),
   itemId: document.getElementById('item-id'),
   itemType: document.getElementById('item-type'),
+  titleLabel: document.getElementById('title-label'),
+  titleLabelText: document.getElementById('title-label-text'),
   itemTitle: document.getElementById('item-title'),
   itemImageFile: document.getElementById('item-image-file'),
   imagePreview: document.getElementById('image-preview'),
   previewImg: document.getElementById('preview-img'),
   removeImageBtn: document.getElementById('remove-image'),
-  itemPrice: document.getElementById('item-price'),
-  itemCategory: document.getElementById('item-category'),
-  itemProjectUrl: document.getElementById('item-project-url'),
-  itemTechnologies: document.getElementById('item-technologies'),
-  itemContent: document.getElementById('item-content'),
-  priceLabel: document.getElementById('price-label'),
   categoryLabel: document.getElementById('category-label'),
-  projectUrlLabel: document.getElementById('project-url-label'),
-  technologiesLabel: document.getElementById('technologies-label'),
+  itemCategory: document.getElementById('item-category'),
+  itemContent: document.getElementById('item-content'),
   contentLabel: document.getElementById('content-label'),
   contentLabelText: document.getElementById('content-label-text'),
   cancelBtn: document.getElementById('cancel-btn'),
   submitBtn: document.getElementById('submit-btn'),
-  template: document.getElementById('item-template')
+  template: document.getElementById('item-template'),
+  notifications: document.getElementById('notification-stack'),
+  apiPlaceholder: document.getElementById('api-placeholder')
 };
 
 const sectionConfig = {
@@ -47,26 +45,91 @@ const sectionConfig = {
     title: 'Blog Posts',
     buttonText: 'New Post',
     endpoint: '/posts',
-    fields: ['title', 'image', 'content']
+    titleLabel: 'Post Title',
+    showContent: true,
+    contentLabel: 'Content',
+    requireContent: true,
+    showCategory: false
   },
   products: {
     title: 'Products',
     buttonText: 'New Product',
     endpoint: '/products',
-    fields: ['title', 'image', 'price', 'category', 'content']
+    titleLabel: 'Product Name',
+    showContent: true,
+    contentLabel: 'Description',
+    requireContent: true,
+    showCategory: true
   },
   portfolio: {
     title: 'Portfolio',
-    buttonText: 'New Project',
+    buttonText: 'New',
     endpoint: '/portfolio',
-    fields: ['title', 'image', 'projectUrl', 'technologies', 'content']
+    titleLabel: 'Caption',
+    showContent: false,
+    contentLabel: 'Caption',
+    requireContent: false,
+    showCategory: false
+  },
+  api: {
+    title: 'API',
+    buttonText: null,
+    endpoint: null,
+    titleLabel: 'Title',
+    showContent: false,
+    contentLabel: 'Content',
+    requireContent: false,
+    showCategory: false,
+    isPlaceholder: true
   }
 };
 
-function showStatus(msg, type = 'info') {
-  el.status.textContent = msg;
-  if (msg) el.status.dataset.type = type;
-  else el.status.removeAttribute('data-type');
+const notifications = [];
+const TOAST_DURATION = 5000;
+
+function createNotification(message, type = 'info') {
+  if (!el.notifications) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'notification';
+  toast.dataset.type = type;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+
+  const text = document.createElement('span');
+  text.textContent = message;
+
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.setAttribute('aria-label', 'Dismiss notification');
+  closeButton.innerHTML = '&times;';
+
+  const removeToast = () => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      toast.remove();
+      const idx = notifications.indexOf(toast);
+      if (idx >= 0) notifications.splice(idx, 1);
+    }, 200);
+  };
+
+  closeButton.addEventListener('click', removeToast);
+
+  toast.appendChild(text);
+  toast.appendChild(closeButton);
+
+  notifications.push(toast);
+  el.notifications.appendChild(toast);
+
+  setTimeout(() => {
+    if (notifications.includes(toast)) removeToast();
+  }, TOAST_DURATION);
+}
+
+function showStatus(message, type = 'info') {
+  if (!message) return;
+  const intent = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+  createNotification(message, intent);
 }
 
 async function apiRequest(path, opts = {}) {
@@ -88,11 +151,11 @@ async function apiRequest(path, opts = {}) {
 function switchSection(section) {
   currentSection = section;
   const config = sectionConfig[section];
-  
-  // Update UI
+
+  // Update UI for button and placeholder visibility
   el.sectionTitle.textContent = config.title;
-  el.newItemBtn.querySelector('span').textContent = config.buttonText;
-  
+  updateSectionControls(config);
+
   // Update nav active state
   el.navItems.forEach(item => {
     if (item.dataset.section === section) {
@@ -101,31 +164,54 @@ function switchSection(section) {
       item.classList.remove('active');
     }
   });
-  
+
   // Load items for this section
   loadItems();
 }
 
+function updateSectionControls(config) {
+  if (!config) return;
+  const isPlaceholder = !!config.isPlaceholder;
+
+  if (el.newItemBtn) {
+    if (config.buttonText) {
+      el.newItemBtn.hidden = false;
+      el.newItemBtn.disabled = false;
+      el.newItemBtn.querySelector('span').textContent = config.buttonText;
+    } else {
+      el.newItemBtn.hidden = true;
+      el.newItemBtn.disabled = true;
+    }
+  }
+
+  if (el.itemsList) {
+    el.itemsList.hidden = isPlaceholder;
+  }
+
+  if (el.apiPlaceholder) {
+    el.apiPlaceholder.hidden = !isPlaceholder;
+  }
+}
+
 function configureFormFields(section) {
   const config = sectionConfig[section];
-  
-  // Hide all optional fields first
-  el.priceLabel.hidden = true;
-  el.categoryLabel.hidden = true;
-  el.projectUrlLabel.hidden = true;
-  el.technologiesLabel.hidden = true;
-  
-  // Show fields based on section
-  if (section === 'products') {
-    el.priceLabel.hidden = false;
+  el.titleLabelText.textContent = config.titleLabel;
+
+  if (config.showCategory) {
     el.categoryLabel.hidden = false;
-    el.contentLabelText.textContent = 'Description';
-  } else if (section === 'portfolio') {
-    el.projectUrlLabel.hidden = false;
-    el.technologiesLabel.hidden = false;
-    el.contentLabelText.textContent = 'Description';
   } else {
-    el.contentLabelText.textContent = 'Content';
+    el.categoryLabel.hidden = true;
+    el.itemCategory.value = '';
+  }
+
+  if (config.showContent) {
+    el.contentLabel.hidden = false;
+    el.contentLabelText.textContent = config.contentLabel;
+    el.itemContent.required = !!config.requireContent;
+  } else {
+    el.contentLabel.hidden = true;
+    el.itemContent.required = false;
+    el.itemContent.value = '';
   }
 }
 
@@ -138,37 +224,58 @@ function populateItems(items) {
   
   items.forEach(item => {
     const node = el.template.content.cloneNode(true);
-    const article = node.querySelector('.item-card');
-    
-    // Set image if exists
     const imageContainer = node.querySelector('.item-image');
+    const imageEl = imageContainer.querySelector('img');
+    const titleEl = node.querySelector('.item-title');
+    const dateEl = node.querySelector('.item-date');
+    const contentEl = node.querySelector('.item-content');
+    const extraContainer = node.querySelector('.item-extra');
+
     if (item.image_url) {
       imageContainer.hidden = false;
-      imageContainer.querySelector('img').src = item.image_url;
-      imageContainer.querySelector('img').alt = item.title;
+      imageEl.src = item.image_url;
+      imageEl.alt = item.title || 'Image';
+    } else {
+      imageContainer.hidden = true;
+      imageEl.src = '';
+      imageEl.alt = '';
     }
-    
-    // Set basic info
-    node.querySelector('.item-title').textContent = item.title;
+
+    titleEl.textContent = item.title || 'Untitled';
+
     const date = new Date(item.updated_at || item.created_at || Date.now());
-    node.querySelector('.item-date').textContent = date.toLocaleString();
-    node.querySelector('.item-content').textContent = item.content?.slice(0, 120) || item.description?.slice(0, 120) || '';
-    
-    // Set extra info based on type
-    const extraContainer = node.querySelector('.item-extra');
-    if (currentSection === 'products' && item.price) {
-      extraContainer.hidden = false;
-      extraContainer.innerHTML = `<strong>Price:</strong> $${parseFloat(item.price).toFixed(2)}${item.category ? ` | <strong>Category:</strong> ${item.category}` : ''}`;
-    } else if (currentSection === 'portfolio') {
-      const parts = [];
-      if (item.project_url) parts.push(`<a href="${item.project_url}" target="_blank">View Project</a>`);
-      if (item.technologies) parts.push(`<strong>Tech:</strong> ${item.technologies}`);
-      if (parts.length) {
+
+    if (currentSection === 'portfolio') {
+      dateEl.hidden = true;
+      dateEl.textContent = '';
+
+      if (item.content) {
+        contentEl.hidden = false;
+        contentEl.textContent = item.content;
+      } else {
+        contentEl.hidden = true;
+        contentEl.textContent = '';
+      }
+
+      extraContainer.hidden = true;
+      extraContainer.innerHTML = '';
+    } else {
+      dateEl.hidden = false;
+      dateEl.textContent = date.toLocaleString();
+
+      const summary = item.content || '';
+      contentEl.hidden = !summary;
+      contentEl.textContent = summary ? summary.slice(0, 160) : '';
+
+      if (currentSection === 'products' && item.category) {
         extraContainer.hidden = false;
-        extraContainer.innerHTML = parts.join(' | ');
+        extraContainer.innerHTML = `<strong>Category:</strong> ${item.category}`;
+      } else {
+        extraContainer.hidden = true;
+        extraContainer.innerHTML = '';
       }
     }
-    
+
     // Set event listeners
     node.querySelector('.edit-btn').addEventListener('click', () => openEditor(item));
     node.querySelector('.delete-btn').addEventListener('click', () => deleteItem(item.id));
@@ -179,7 +286,11 @@ function populateItems(items) {
 async function loadItems() {
   try {
     const config = sectionConfig[currentSection];
-    showStatus(`Loading ${config.title.toLowerCase()}…`);
+    if (config?.isPlaceholder) {
+      // No data to load for placeholder sections
+      return;
+    }
+    showStatus(`Loading ${config.title.toLowerCase()}…`, 'info');
     const items = await apiRequest(config.endpoint);
     populateItems(items);
     showStatus('');
@@ -223,31 +334,40 @@ function removeImage() {
 
 function openEditor(item = null) {
   const config = sectionConfig[currentSection];
+  if (config?.isPlaceholder) {
+    showStatus('API tools are coming soon.', 'info');
+    return;
+  }
   configureFormFields(currentSection);
+  currentImageFile = null;
   
   if (item) {
-    el.dialogTitle.textContent = `Edit ${currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Project'}`;
+    const itemType = currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Image';
+    el.dialogTitle.textContent = `Edit ${itemType}`;
     el.itemId.value = item.id;
     el.itemType.value = currentSection;
     el.itemTitle.value = item.title || '';
-    el.itemContent.value = item.content || item.description || '';
+
+    if (config.showContent) {
+      el.itemContent.value = item.content || '';
+    } else {
+      el.itemContent.value = '';
+    }
+
+    if (config.showCategory) {
+      el.itemCategory.value = item.category || '';
+    } else {
+      el.itemCategory.value = '';
+    }
     
     // Show existing image if available
     if (item.image_url) {
       el.previewImg.src = item.image_url;
       el.imagePreview.hidden = false;
     }
-    
-    // Set section-specific fields
-    if (currentSection === 'products') {
-      el.itemPrice.value = item.price || '';
-      el.itemCategory.value = item.category || '';
-    } else if (currentSection === 'portfolio') {
-      el.itemProjectUrl.value = item.project_url || '';
-      el.itemTechnologies.value = item.technologies || '';
-    }
   } else {
-    el.dialogTitle.textContent = `Create ${currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Project'}`;
+    const itemType = currentSection === 'blog' ? 'Post' : currentSection === 'products' ? 'Product' : 'Image';
+    el.dialogTitle.textContent = `Create ${itemType}`;
     el.itemId.value = '';
     el.itemType.value = currentSection;
     el.itemForm.reset();
@@ -283,22 +403,38 @@ async function submitItem(e) {
   const id = el.itemId.value;
   const config = sectionConfig[currentSection];
   
-  const payload = {
-    title: el.itemTitle.value.trim(),
-    content: el.itemContent.value.trim()
-  };
-  
-  if (!payload.title || !payload.content) {
-    showStatus('Title and content/description required', 'error');
+  const title = el.itemTitle.value.trim();
+  const content = el.itemContent.value.trim();
+  const category = el.itemCategory.value.trim();
+
+  if (!title) {
+    showStatus('Title is required', 'error');
     return;
   }
   
+  if (config.requireContent && !content) {
+    showStatus(`${config.contentLabel} is required`, 'error');
+    return;
+  }
+
+  if (currentSection === 'portfolio') {
+    const hasExistingImage = !!(el.previewImg.src && el.previewImg.src.startsWith('http'));
+    if (!currentImageFile && !hasExistingImage) {
+      showStatus('Image is required for portfolio items', 'error');
+      return;
+    }
+  }
+
+  const payload = { title };
+  if (config.showContent && content) payload.content = content;
+  if (config.showCategory) payload.category = category || null;
+
   try {
-    showStatus(id ? 'Updating…' : 'Creating…');
+    showStatus(id ? 'Updating…' : 'Creating…', 'info');
     
     // Handle image upload if new file selected
     if (currentImageFile) {
-      showStatus('Uploading image…');
+      showStatus('Uploading image…', 'info');
       payload.image_url = await uploadImage(currentImageFile);
     } else if (el.previewImg.src && el.previewImg.src.startsWith('http')) {
       // Keep existing image URL
@@ -306,17 +442,6 @@ async function submitItem(e) {
     }
     
     // Add section-specific fields
-    if (currentSection === 'products') {
-      const price = el.itemPrice.value.trim();
-      if (price) payload.price = parseFloat(price);
-      const category = el.itemCategory.value.trim();
-      if (category) payload.category = category;
-    } else if (currentSection === 'portfolio') {
-      const projectUrl = el.itemProjectUrl.value.trim();
-      if (projectUrl) payload.project_url = projectUrl;
-      const technologies = el.itemTechnologies.value.trim();
-      if (technologies) payload.technologies = technologies;
-    }
     
     const body = JSON.stringify(payload);
     if (id) {
@@ -372,6 +497,8 @@ function restoreSession() {
   el.loginSection.hidden = true;
   el.dashboard.hidden = false;
   el.logout.hidden = false;
+  const initialConfig = sectionConfig[currentSection];
+  updateSectionControls(initialConfig);
   loadItems();
 }
 

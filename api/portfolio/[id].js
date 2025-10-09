@@ -46,7 +46,7 @@ export default async function handler(req, res) {
     case 'GET': {
       const { data, error } = await supabase
         .from('portfolio')
-        .select('id,title,content,image_url,project_url,technologies,created_at,updated_at')
+        .select('id,title,image_url,created_at,updated_at')
         .eq('id', id)
         .single();
 
@@ -62,11 +62,11 @@ export default async function handler(req, res) {
       const user = await requireAdmin(req, res);
       if (!user) return;
 
-      const { title, content, image_url, project_url, technologies } = req.body;
+      const { title, image_url } = req.body;
 
       const { data, error } = await supabase
         .from('portfolio')
-        .update({ title, content, image_url, project_url, technologies, updated_at: new Date().toISOString() })
+        .update({ title, image_url, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();

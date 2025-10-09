@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supabase Blog Admin</title>
+  <title>GalaltixNIG Admin Dashboard</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect">
+  <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -57,7 +61,22 @@
             </svg>
             <span>Portfolio</span>
           </button>
+          <button class="nav-item" data-section="api">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7h16"></path>
+              <path d="M4 12h16"></path>
+              <path d="M4 17h16"></path>
+              <path d="M9 4v3"></path>
+              <path d="M9 17v3"></path>
+              <path d="M15 4v3"></path>
+              <path d="M15 17v3"></path>
+            </svg>
+            <span>API</span>
+          </button>
         </nav>
+
+        <!-- Notification region lives at the bottom of the side panel -->
+        <div id="notification-stack" class="notification-stack" aria-live="polite" aria-atomic="false"></div>
       </aside>
 
       <section class="content-area">
@@ -75,9 +94,23 @@
         <div class="items-list" id="items-list">
           <p class="placeholder">No items yet. Create your first item!</p>
         </div>
+
+        <!-- API placeholder content -->
+        <div id="api-placeholder" class="api-placeholder" hidden>
+          <div class="api-placeholder-card">
+            <div class="api-placeholder-icon" aria-hidden="true">🔧</div>
+            <h3>Coming Soon</h3>
+            <p>API configuration tools will appear here in a future release.</p>
+          </div>
+        </div>
       </section>
     </div>
   </main>
+
+  <!-- Footer - Appears at the bottom of the page -->
+  <footer class="admin-footer">
+    <p>Designed & Developed by <a href="https://www.defendhub.ng" target="_blank" rel="noopener noreferrer">DefendHub Enterprise</a></p>
+  </footer>
 
   <dialog id="item-dialog">
     <form method="dialog" id="item-form">
@@ -85,8 +118,8 @@
       <input type="hidden" id="item-id">
       <input type="hidden" id="item-type">
       
-      <label>
-        Title
+      <label id="title-label">
+        <span id="title-label-text">Title</span>
         <input type="text" id="item-title" required>
       </label>
       
@@ -102,24 +135,9 @@
         <small class="help-text">Upload an image or leave empty</small>
       </label>
       
-      <label id="price-label" hidden>
-        Price
-        <input type="number" id="item-price" step="0.01" min="0" placeholder="0.00">
-      </label>
-      
       <label id="category-label" hidden>
         Category
-        <input type="text" id="item-category" placeholder="e.g., Electronics, Clothing">
-      </label>
-      
-      <label id="project-url-label" hidden>
-        Project URL
-        <input type="url" id="item-project-url" placeholder="https://...">
-      </label>
-      
-      <label id="technologies-label" hidden>
-        Technologies
-        <input type="text" id="item-technologies" placeholder="e.g., React, Node.js, MongoDB">
+        <input type="text" id="item-category" placeholder="e.g., Apparel">
       </label>
       
       <label id="content-label">
