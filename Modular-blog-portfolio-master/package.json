@@ -1,0 +1,11 @@
+{
+  "name": "supabase-blog",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "lint": "echo \"No lint configured\""
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.48.0"
+  }
+}
