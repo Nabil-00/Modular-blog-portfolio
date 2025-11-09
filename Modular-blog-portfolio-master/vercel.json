@@ -20,6 +20,14 @@
       "dest": "/api/upload.js"
     },
     {
+      "src": "/api/contact",
+      "dest": "/api/contact/index.js"
+    },
+    {
+      "src": "/api/newsletter",
+      "dest": "/api/newsletter/index.js"
+    },
+    {
       "src": "/api/posts/([^/]+)",
       "dest": "/api/posts/[id].js?id=$1"
     },
