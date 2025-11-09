@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": null,
+  "buildCommand": "echo 'No build needed'",
   "builds": [
     {
       "src": "api/**/*.js",
