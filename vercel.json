@@ -1,65 +1,64 @@
 {
   "version": 2,
   "buildCommand": null,
-  "outputDirectory": "Modular-blog-portfolio-master",
   "builds": [
     {
-      "src": "Modular-blog-portfolio-master/api/**/*.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     },
     {
-      "src": "Modular-blog-portfolio-master/admin/**",
+      "src": "admin/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/api/auth/login",
-      "dest": "/Modular-blog-portfolio-master/api/auth/login.js"
+      "dest": "/api/auth/login.js"
     },
     {
       "src": "/api/upload",
-      "dest": "/Modular-blog-portfolio-master/api/upload.js"
+      "dest": "/api/upload.js"
     },
     {
       "src": "/api/contact",
-      "dest": "/Modular-blog-portfolio-master/api/contact/index.js"
+      "dest": "/api/contact/index.js"
     },
     {
       "src": "/api/newsletter",
-      "dest": "/Modular-blog-portfolio-master/api/newsletter/index.js"
+      "dest": "/api/newsletter/index.js"
     },
     {
       "src": "/api/posts/([^/]+)",
-      "dest": "/Modular-blog-portfolio-master/api/posts/[id].js?id=$1"
+      "dest": "/api/posts/[id].js?id=$1"
     },
     {
       "src": "/api/posts",
-      "dest": "/Modular-blog-portfolio-master/api/posts/index.js"
+      "dest": "/api/posts/index.js"
     },
     {
       "src": "/api/products/([^/]+)",
-      "dest": "/Modular-blog-portfolio-master/api/products/[id].js?id=$1"
+      "dest": "/api/products/[id].js?id=$1"
     },
     {
       "src": "/api/products",
-      "dest": "/Modular-blog-portfolio-master/api/products/index.js"
+      "dest": "/api/products/index.js"
     },
     {
       "src": "/api/portfolio/([^/]+)",
-      "dest": "/Modular-blog-portfolio-master/api/portfolio/[id].js?id=$1"
+      "dest": "/api/portfolio/[id].js?id=$1"
     },
     {
       "src": "/api/portfolio",
-      "dest": "/Modular-blog-portfolio-master/api/portfolio/index.js"
+      "dest": "/api/portfolio/index.js"
     },
     {
       "src": "/admin/(.*)",
-      "dest": "/Modular-blog-portfolio-master/admin/$1"
+      "dest": "/admin/$1"
     },
     {
       "src": "/admin",
-      "dest": "/Modular-blog-portfolio-master/admin/index.html"
+      "dest": "/admin/index.html"
     },
     {
       "src": "/",
