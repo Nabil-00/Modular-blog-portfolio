@@ -1,6 +1,7 @@
 {
   "version": 2,
   "buildCommand": "echo 'No build needed'",
+  "outputDirectory": "admin",
   "builds": [
     {
       "src": "api/**/*.js",
